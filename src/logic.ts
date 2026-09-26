@@ -26,7 +26,7 @@ export function analyzeLabel(text: string, allergies: string[]) {
   }
 }
 
-export function answerQuestion(question: string, age: number, allergies: string[], meals: Meal[]) {
+export function answerQuestion(question: string, age: number, allergies: string[], meals: Meal[], catalog: Food[] = foods) {
   const q = question.toLowerCase()
   const source = (label: string, url: string) => ({ label, url })
   if (/allerg|reaction|rash|swelling|breath/.test(q)) return {
@@ -55,7 +55,7 @@ export function answerQuestion(question: string, age: number, allergies: string[
     source: source('CDC: Choking hazards', 'https://www.cdc.gov/infant-toddler-nutrition/foods-and-drinks/choking-hazards.html'),
   }
   const today = meals.filter(m => m.date === localDay())
-  const groups = new Set(today.map(m => foods.find(f => f.id === m.foodId)?.category).filter(Boolean))
+  const groups = new Set(today.map(m => (m.foodSnapshot || catalog.find(f => f.id === m.foodId))?.category).filter(Boolean))
   return {
     title: 'Start with the whole day',
     body: `${today.length ? `You logged ${today.length} food${today.length === 1 ? '' : 's'} from ${groups.size} food group${groups.size === 1 ? '' : 's'} today. ` : ''}Around six months, many babies begin solid foods alongside milk feeds. A range of foods across time can help. Tell me a food or a specific concern, or add foods to the meal log to explore the day. For individual nutrition or health needs, check with your child’s clinician.`,

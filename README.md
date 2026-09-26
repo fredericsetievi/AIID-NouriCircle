@@ -14,7 +14,8 @@ Open `/app.html` on the local URL printed by Vite. To check a production build, 
 ## What works in this prototype
 
 - **Child profile:** Set a nickname, age in months, and known allergies. The profile stays in browser local storage.
-- **Fresh food explorer:** Search eight example foods, enter a portion in grams, see an approximate protein amount, and add it to today's meal log.
+- **Food explorer:** Search 20 built-in example foods, enter a portion in grams, see an approximate protein amount, and add it to today's meal log.
+- **My foods:** Add, edit, or remove your own food details including protein per 100 g, category, allergen notes, and a preparation reminder. Saved foods stay in this browser and can be added to the meal log. Logged meals retain their original food information if a saved food is later changed or removed.
 - **Meal log:** Review foods, groups, and an estimated protein total for the current day. Remove entries. The app does not claim a child has met a daily requirement.
 - **Food label check:** Upload a photo for browser-side OCR, or paste label text. Review and correct the text, then highlight saved allergy terms, common allergen words, a few nutrition values, and selected ingredient terms. It does not rate a product as healthy or safe.
 - **Live packaged food lookup:** Enter the digits beneath a barcode to fetch the product name, ingredients, allergens, possible traces, and available per-100 g nutrient values from Open Food Facts. The original package remains the reference for allergy decisions. This free public service can be unavailable, limited, or missing products.
@@ -26,7 +27,7 @@ Open `/app.html` on the local URL printed by Vite. To check a production build, 
 
 This is an educational prototype, not medical advice. Food values are rounded illustrative estimates per 100 g. Brands and preparation differ. OCR can miss or misread text. Check the original food package and your child's allergy care plan. Consult a clinician for individual nutrition, allergy, growth, or health questions. The prepared assistant should be replaced by a securely hosted service with reviewed sources before a public launch. Live accounts, moderation, data sync, and a verified nutrition database are future work.
 
-No image, child profile, post, or meal is sent to a NouriCircle server. A barcode lookup sends the barcode to Open Food Facts and receives a public product record. Profile, meal, and local forum data are stored in the current browser. OCR runs in the browser through Tesseract.js, which loads its worker and language assets on first use. Clear this site's browser storage to reset the demo.
+No image, child profile, custom food, post, or meal is sent to a NouriCircle server. A barcode lookup sends the barcode to Open Food Facts and receives a public product record. Profile, custom food, meal, and local forum data are stored in the current browser. This is not a synced account: another device or browser will not show the saved entries. OCR runs in the browser through Tesseract.js, which loads its worker and language assets on first use. Clear this site's browser storage to reset the demo.
 
 ## Sources used for the educational copy
 

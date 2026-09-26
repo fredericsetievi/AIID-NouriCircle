@@ -8,6 +8,7 @@ export type Food = {
   note: string
   allergens: string[]
   tip: string
+  local?: boolean
 }
 
 // Rounded illustrative values per 100 g. Actual foods, preparation and labels vary.
@@ -20,9 +21,21 @@ export const foods: Food[] = [
   { id: 'avocado', name: 'Avocado', emoji: '🥑', category: 'Fruit & veg', color: 'mint', protein: 2, note: 'Unsaturated fats and fiber', allergens: [], tip: 'Mash or slice to a texture your child can manage.' },
   { id: 'banana', name: 'Banana', emoji: '🍌', category: 'Fruit & veg', color: 'butter', protein: 1, note: 'Fruit and fiber', allergens: [], tip: 'Serve in an age-appropriate texture and supervise eating.' },
   { id: 'oats', name: 'Oatmeal, cooked', emoji: '🥣', category: 'Grains', color: 'peach', protein: 3, note: 'Whole grain and fiber', allergens: [], tip: 'Prepare with a soft texture and check packaged oats for cross-contact notes.' },
+  { id: 'chicken', name: 'Chicken breast, cooked', emoji: '🍗', category: 'Protein', color: 'peach', protein: 31, note: 'Protein rich poultry', allergens: [], tip: 'Cook thoroughly and serve moist, soft pieces suited to your child.' },
+  { id: 'lentils', name: 'Lentils, cooked', emoji: '🫘', category: 'Protein', color: 'butter', protein: 9, note: 'Plant protein and fiber', allergens: [], tip: 'Cook until soft and mash or serve in a suitable texture.' },
+  { id: 'chickpeas', name: 'Chickpeas, cooked', emoji: '🫘', category: 'Protein', color: 'mint', protein: 9, note: 'Plant protein and fiber', allergens: [], tip: 'Mash or flatten whole chickpeas to reduce choking risk.' },
+  { id: 'rice', name: 'Brown rice, cooked', emoji: '🍚', category: 'Grains', color: 'butter', protein: 3, note: 'Whole grain', allergens: [], tip: 'Cook until soft and offer a variety of grains over time.' },
+  { id: 'quinoa', name: 'Quinoa, cooked', emoji: '🍚', category: 'Grains', color: 'peach', protein: 4, note: 'Grain with some protein', allergens: [], tip: 'Cook thoroughly and offer in a soft texture.' },
+  { id: 'sweet-potato', name: 'Sweet potato, cooked', emoji: '🍠', category: 'Fruit & veg', color: 'peach', protein: 2, note: 'Vegetable with fiber', allergens: [], tip: 'Cook until soft and mash or cut to an age-appropriate shape.' },
+  { id: 'carrot', name: 'Carrot, cooked', emoji: '🥕', category: 'Fruit & veg', color: 'peach', protein: 1, note: 'Vegetable variety', allergens: [], tip: 'Cook until soft. Hard raw carrot pieces can be a choking hazard.' },
+  { id: 'peas', name: 'Peas, cooked', emoji: '🫛', category: 'Fruit & veg', color: 'mint', protein: 5, note: 'Vegetable with some protein', allergens: [], tip: 'Cook until soft and mash or flatten for younger eaters.' },
+  { id: 'apple', name: 'Apple, stewed', emoji: '🍎', category: 'Fruit & veg', color: 'butter', protein: 0.3, note: 'Fruit variety', allergens: [], tip: 'Cook until soft. Avoid hard raw chunks for younger children.' },
+  { id: 'pear', name: 'Pear, ripe', emoji: '🍐', category: 'Fruit & veg', color: 'mint', protein: 0.4, note: 'Fruit variety', allergens: [], tip: 'Serve ripe and soft in a texture your child can manage.' },
+  { id: 'strawberry', name: 'Strawberries', emoji: '🍓', category: 'Fruit & veg', color: 'lilac', protein: 0.7, note: 'Fruit variety', allergens: [], tip: 'Cut into an age-appropriate shape and supervise eating.' },
+  { id: 'cottage-cheese', name: 'Cottage cheese', emoji: '🧀', category: 'Dairy & alternatives', color: 'lilac', protein: 11, note: 'Dairy protein', allergens: ['Milk'], tip: 'Check the label for sodium and milk allergens before serving.' },
 ]
 
-export type Meal = { id: string; foodId: string; grams: number; meal: string; date: string }
+export type Meal = { id: string; foodId: string; grams: number; meal: string; date: string; foodSnapshot?: Food }
 export type Post = { id: string; category: string; title: string; body: string; author: string; time: string; replies: string[]; local?: boolean }
 
 export const samplePosts: Post[] = [
