@@ -82,6 +82,9 @@ Run the app in a simulator or on a device from Android Studio/Xcode. After chang
 
 The repository includes source projects, not signed APK/IPA builds. App store signing, testing on physical devices, policy review, and release assets are still needed before distribution.
 
-### Download an Android test APK from GitHub Actions
+### Download mobile build artifacts from GitHub Actions
 
-Open the repository's **Actions → Android APK → Run workflow** (or use the build triggered by a push to `main`). When the run succeeds, download the `nouricircle-android-debug-apk` artifact, unzip it, and transfer `app-debug.apk` to your Android phone. Open the APK on the phone and allow installation from that file manager/browser if Android asks. This is a test build signed with a generated debug key; a Play Store release needs its own release signing and distribution setup. Each Actions run can use a different debug signing key, so uninstalling a previous test build may be necessary before installing a new one.
+Open the repository's **Actions → Mobile builds → Run workflow** (or use the build triggered by a push to `main`). When the run succeeds, download the `nouricircle-android-debug-apk` artifact, unzip it, and transfer `app-debug.apk` to your Android phone. Open the APK on the phone and allow installation from that file manager/browser if Android asks. The Android APK is a test build signed with a generated debug key; a Play Store release needs its own release signing and distribution setup. Each Actions run can use a different debug signing key, so uninstalling a previous test build may be necessary before installing a new one.
+
+
+The same **Mobile builds** workflow also creates `nouricircle-ios-simulator-app`, a zipped `.app` for an iOS Simulator on a Mac. It cannot be installed on a physical iPhone. A device-installable `.ipa` requires an Apple signing certificate and provisioning profile (or TestFlight distribution), which are not configured in this repository. Never commit signing credentials.

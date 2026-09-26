@@ -1,0 +1,82 @@
+name: Mobile builds
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'vite.config.ts'
+      - 'capacitor.config.ts'
+      - 'mobile/**'
+      - 'package*.json'
+      - '.github/workflows/mobile-builds.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Install Android SDK platform
+        run: |
+          SDKMANAGER="$(command -v sdkmanager || find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          test -n "$SDKMANAGER"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Install dependencies and sync app
+        run: |
+          npm ci
+          npm run mobile:sync
+      - name: Build installable debug APK
+        working-directory: mobile/android
+        run: ./gradlew --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v6
+        with:
+          name: nouricircle-android-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  ios:
+    name: iOS simulator app
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies and sync app
+        run: |
+          npm ci
+          npm run mobile:sync
+      - name: Build iOS simulator app
+        run: |
+          xcodebuild \
+            -project mobile/ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/nouricircle-ios" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$RUNNER_TEMP/nouricircle-ios/Build/Products/Debug-iphonesimulator/App.app" \
+            "$RUNNER_TEMP/nouricircle-ios-simulator.zip"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: nouricircle-ios-simulator-app
+          path: ${{ runner.temp }}/nouricircle-ios-simulator.zip
+          if-no-files-found: error
