@@ -20,6 +20,8 @@ npm run dev
 
 Open `/app.html` on the local URL printed by Vite. The app source is in `web/`; native projects are in `mobile/`. To check a production build, run `npm run build` and `npm run preview`. This repository's Pages setting currently serves `main` at the repository root. After editing source files, run `npm run sync-pages` and commit the updated `index.html` and `assets/` with the source. The GitHub Actions workflow also builds a `dist/` deployment for a future switch to Actions based Pages hosting.
 
+For a feature-by-feature explanation and the parent problem each feature addresses, see [Feature documentation](docs/FEATURES.md).
+
 ## What works in this prototype
 
 - **Child profile:** Set a nickname, age in months, and known allergies. The profile stays in browser local storage.
