@@ -8,7 +8,8 @@ on:
       - 'web/**'
       - 'vite.config.ts'
       - 'capacitor.config.ts'
-      - 'mobile/**'
+      - 'mobile/android/**'
+      - 'mobile/ios/**'
       - 'package*.json'
       - '.github/workflows/mobile-builds.yml'
 
@@ -80,3 +81,43 @@ jobs:
           name: nouricircle-ios-simulator-app
           path: ${{ runner.temp }}/nouricircle-ios-simulator.zip
           if-no-files-found: error
+
+  publish_android:
+    name: Publish Android download
+    needs: android
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: nouricircle-mobile-downloads
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/download-artifact@v7
+        with:
+          name: nouricircle-android-debug-apk
+          path: ${{ runner.temp }}/android-apk
+      - name: Replace the downloadable APK
+        env:
+          BUILT_SHA: ${{ github.sha }}
+        run: |
+          git fetch origin main
+          # A newer app source should be built by its own run, not replaced by this older APK.
+          if ! git diff --quiet "$BUILT_SHA" origin/main -- web mobile/android capacitor.config.ts package.json package-lock.json vite.config.ts .github/workflows/mobile-builds.yml; then
+            echo "Newer app source is on main; skipping this older APK."
+            exit 0
+          fi
+          git checkout -B main origin/main
+          cp "$RUNNER_TEMP/android-apk/app-debug.apk" mobile/downloads/NouriCircle-Android-debug.apk
+          git add mobile/downloads/NouriCircle-Android-debug.apk
+          if git diff --cached --quiet; then
+            echo "APK has not changed."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Update Android test APK"
+          git push origin HEAD:main
