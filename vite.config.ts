@@ -1,3 +1,3 @@
 import { defineConfig } from 'vite'
 
-export default defineConfig({ base: './', build: { rollupOptions: { input: 'app.html' } } })
+export default defineConfig({ root: 'web', base: './', build: { outDir: '../dist', emptyOutDir: true, rollupOptions: { input: 'web/app.html' } } })

@@ -2,7 +2,7 @@ node_modules
 dist
 .DS_Store
 .env*
-worker/.dev.vars*
+web/worker/.dev.vars*
 !.env.example
 
 *.traineddata

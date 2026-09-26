@@ -5,6 +5,9 @@ import {
   ScanLine, Search, Send, Settings2, ShieldCheck, Sparkles, Trash2, UploadCloud, Users, X,
 } from 'lucide-react'
 import { createWorker } from 'tesseract.js'
+import { Capacitor } from '@capacitor/core'
+import { Camera as NativeCamera, CameraResultType, CameraSource } from '@capacitor/camera'
+import { App as NativeApp } from '@capacitor/app'
 import { foods, samplePosts, sources, type Food, type Meal, type Post } from './data'
 import { analyzeLabel, answerQuestion, localDay, proteinFor } from './logic'
 import { lookupProduct, type Product } from './openFoodFacts'
@@ -42,6 +45,19 @@ function App() {
   const [guideStep, setGuideStep] = useState(() => localStorage.getItem('nc-guide-done') ? -1 : 0)
   const finishGuide = () => { localStorage.setItem('nc-guide-done', '1'); setGuideStep(-1) }
   const navigate = (next: Page) => { setPage(next); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    const listener = NativeApp.addListener('backButton', () => {
+      if (guideStep >= 0) { finishGuide(); return }
+      if (selectedFood) { setSelectedFood(null); return }
+      if (settingsOpen) { setSettingsOpen(false); return }
+      if (showSources) { setShowSources(false); return }
+      if (mobileMenu) { setMobileMenu(false); return }
+      if (page !== 'home') navigate('home')
+      else void NativeApp.exitApp()
+    })
+    return () => { void listener.then(handle => handle.remove()) }
+  }, [page, guideStep, selectedFood, settingsOpen, showSources, mobileMenu])
   const changeChild = (value: Child) => { setChild(value); save('nc-child', value) }
   const changeMeals = (value: Meal[]) => { setMeals(value); save('nc-meals', value) }
   const changeCustomFoods = (value: Food[]) => { setCustomFoods(value); save('nc-custom-foods', value) }
@@ -76,6 +92,7 @@ function App() {
         <footer className="footer"><span>Made for curious parents. Built as a learning prototype.</span><button onClick={() => setShowSources(true)}>Sources & important notes <ArrowRight size={14} /></button></footer>
       </div>
     </main>
+    <nav className="mobile-tabs" aria-label="Mobile navigation">{nav.map(item => <button key={item.page} className={page === item.page ? 'active' : ''} aria-current={page === item.page ? 'page' : undefined} onClick={() => navigate(item.page)}><item.icon size={22} /><span>{item.page === 'explore' ? 'Foods' : item.page === 'label' ? 'Scan' : item.page === 'circle' ? 'Circle' : item.page === 'home' ? 'Home' : 'Ask'}</span></button>)}</nav>
     {settingsOpen && <div className="modal-backdrop" onMouseDown={() => setSettingsOpen(false)}><div className="modal settings-modal" role="dialog" aria-modal="true" aria-label="Child profile" onMouseDown={e => e.stopPropagation()}><button className="icon-button modal-close" onClick={() => setSettingsOpen(false)} aria-label="Close"><X size={20} /></button><div className="modal-eyebrow"><Settings2 size={16} /> YOUR CHILD'S PROFILE</div><h2>A little context helps.</h2><p>Only saved on this browser. Use a nickname if you like.</p><label className="form-label">Nickname<input value={child.name} maxLength={25} onChange={e => changeChild({ ...child, name: e.target.value })} /></label><label className="form-label">Age in months<input type="number" min="6" max="120" value={child.age} onChange={e => changeChild({ ...child, age: Math.max(6, Math.min(120, Number(e.target.value) || 6)) })} /></label><div className="form-label">Known allergies <small>Choose only diagnosed or confirmed allergies</small></div><div className="chip-grid">{allergenOptions.map(a => <button key={a} className={`choice-chip ${child.allergies.includes(a) ? 'selected' : ''}`} onClick={() => changeChild({ ...child, allergies: child.allergies.includes(a) ? child.allergies.filter(x => x !== a) : [...child.allergies, a] })}>{child.allergies.includes(a) && <Check size={14} />}{a}</button>)}</div><button className="button primary full" onClick={() => setSettingsOpen(false)}>Done <ArrowRight size={17} /></button></div></div>}
     {selectedFood && <FoodModal food={selectedFood} child={child} onClose={() => setSelectedFood(null)} onAdd={(grams, meal) => { changeMeals([{ id: crypto.randomUUID(), foodId: selectedFood.id, foodSnapshot: selectedFood, grams, meal, date: localDay() }, ...meals]); setSelectedFood(null); navigate('home') }} />}
     {showSources && <div className="modal-backdrop" onMouseDown={() => setShowSources(false)}><div className="modal sources-modal" role="dialog" aria-modal="true" aria-label="Sources and notes" onMouseDown={e => e.stopPropagation()}><button className="icon-button modal-close" onClick={() => setShowSources(false)} aria-label="Close"><X size={20} /></button><div className="modal-eyebrow"><BookOpen size={16} /> THE SMALL PRINT, MADE CLEAR</div><h2>Sources & important notes</h2><p>This prototype offers educational information and approximate food data. It cannot decide whether a food is safe or whether a child has met personal nutrition needs. Check the original package for allergens and ask your child's clinician for individual advice.</p><p>Portion calculations use rounded, illustrative protein values per 100 g. Preparation, brand, and serving size change the result. Ask Nouri uses live AI only when its secure service is connected; otherwise it shows prepared responses. Forum posts stay in this browser and are not moderated.</p><div className="source-list">{sources.map(s => <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer">{s.label}<ArrowRight size={15} /></a>)}</div></div></div>}
@@ -148,6 +165,7 @@ function FoodModal({ food, child, onClose, onAdd }: { food: Food; child: Child; 
 }
 function LabelPage({ child }: { child: Child }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const [image, setImage] = useState<string | null>(null)
   const [label, setLabel] = useState('')
   const [barcode, setBarcode] = useState('')
@@ -173,9 +191,27 @@ function LabelPage({ child }: { child: Child }) {
     } catch (e) { setLookupMessage(e instanceof Error ? e.message : 'Lookup failed. Try again or use a label photo.') }
     finally { setLookupBusy(false) }
   }
+  async function takePhoto() {
+    if (!Capacitor.isNativePlatform()) { cameraInputRef.current?.click(); return }
+    try {
+      const photo = await NativeCamera.getPhoto({ quality: 85, resultType: CameraResultType.Uri, source: CameraSource.Camera, correctOrientation: true })
+      if (!photo.webPath) throw new Error('The camera did not return a photo.')
+      const response = await fetch(photo.webPath)
+      const blob = await response.blob()
+      await readPhoto(new File([blob], 'food-label.jpg', { type: blob.type || 'image/jpeg' }))
+    } catch (err) {
+      // Closing the camera is an ordinary cancellation.
+      if (err instanceof Error && /cancel/i.test(err.message)) return
+      setError(err instanceof Error ? err.message : 'Could not open the camera. Choose an image instead.')
+    }
+  }
   async function upload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    await readPhoto(file)
+    e.target.value = ''
+  }
+  async function readPhoto(file: File) {
     if (!file.type.startsWith('image/')) { setError('Please choose an image file.'); return }
     if (image) URL.revokeObjectURL(image)
     setImage(URL.createObjectURL(file)); setBusy(true); setChecked(false); setError(''); setProduct(null); setLookupMessage('')
@@ -192,7 +228,9 @@ function LabelPage({ child }: { child: Child }) {
       {lookupMessage && <div className="alert warning" role="status">{lookupMessage}</div>}
       <div className="input-divider">or use a photo</div>
       <input ref={inputRef} type="file" accept="image/*" onChange={upload} hidden />
-      <button className={`upload-zone ${image ? 'has-image' : ''}`} onClick={() => inputRef.current?.click()}>{image ? <img src={image} alt="Uploaded food label" /> : <><span className="upload-icon"><UploadCloud size={31} /></span><strong>Add a food label photo</strong><small>Click to browse from your device</small><span className="upload-button">Choose an image <ArrowRight size={16} /></span></>}</button>
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={upload} hidden />
+      <button className="button primary full camera-action" onClick={() => void takePhoto()} disabled={busy}><Camera size={19} /> Take a label photo</button>
+      <button className={`upload-zone ${image ? 'has-image' : ''}`} onClick={() => inputRef.current?.click()}>{image ? <img src={image} alt="Uploaded food label" /> : <><span className="upload-icon"><UploadCloud size={31} /></span><strong>Add a food label photo</strong><small>Choose an existing image from your phone</small><span className="upload-button">Choose an image <ArrowRight size={16} /></span></>}</button>
       <p className="upload-note"><Camera size={15} /> A clear photo of the ingredients and nutrition panel works best.</p>
       {busy && <div className="processing"><span className="spinner" /> Reading text from your image. This can take a moment...</div>}
       {error && <div className="alert warning">{error}</div>}

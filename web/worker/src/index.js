@@ -9,8 +9,8 @@ const json = (data, status, origin) => new Response(JSON.stringify(data), {
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin')
-    const allowed = env.ALLOWED_ORIGIN
-    if (!allowed || origin !== allowed) return new Response('Forbidden', { status: 403 })
+    const allowed = [env.ALLOWED_ORIGIN, 'capacitor://localhost', 'http://localhost'].find(value => value && value === origin)
+    if (!allowed) return new Response('Forbidden', { status: 403 })
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': allowed, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '3600', 'Vary': 'Origin' } })
     if (request.method !== 'POST' || new URL(request.url).pathname !== '/ask') return json({ error: 'Not found' }, 404, allowed)
     if (!env.GEMINI_API_KEY) return json({ error: 'Live answers are not configured yet.' }, 503, allowed)

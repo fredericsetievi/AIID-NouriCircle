@@ -2,6 +2,15 @@
 
 NouriCircle is an English-first web prototype for new parents and caregivers of babies starting solid foods and young children. It brings food exploration, a simple meal log, label reading, nutrition questions, and parent discussion into one calm interface. The visual direction follows the NouriCircle brochure: soft lavender, deep purple, rounded cards, and friendly food illustrations.
 
+## Project layout
+
+| Path | Purpose |
+| --- | --- |
+| `web/` | Shared React app, public configuration, and optional Ask Nouri Worker |
+| `mobile/android/`, `mobile/ios/` | Native Capacitor projects for phones |
+| `scripts/`, root configuration | Build both platforms from the shared source |
+| `index.html`, `assets/`, `ask-config.json` | Generated website copy for the current GitHub Pages branch setup |
+
 ## Run it
 
 ```bash
@@ -9,7 +18,7 @@ npm install
 npm run dev
 ```
 
-Open `/app.html` on the local URL printed by Vite. To check a production build, run `npm run build` and `npm run preview`. This repository's Pages setting currently serves `main` at the repository root. After editing source files, run `npm run sync-pages` and commit the updated `index.html` and `assets/` with the source. The GitHub Actions workflow also builds a `dist/` deployment for a future switch to Actions based Pages hosting.
+Open `/app.html` on the local URL printed by Vite. The app source is in `web/`; native projects are in `mobile/`. To check a production build, run `npm run build` and `npm run preview`. This repository's Pages setting currently serves `main` at the repository root. After editing source files, run `npm run sync-pages` and commit the updated `index.html` and `assets/` with the source. The GitHub Actions workflow also builds a `dist/` deployment for a future switch to Actions based Pages hosting.
 
 ## What works in this prototype
 
@@ -48,11 +57,31 @@ USDA FoodData Central is **not** connected in this static release. The fresh foo
 
 ## Activate live Ask Nouri
 
-The static GitHub Pages site cannot protect an API key. The `worker/` directory contains a small Cloudflare Worker that calls Gemini 3.5 Flash-Lite on the server. Cloudflare Workers and Gemini both have free tiers, with quotas and eligibility that can change. You need a Cloudflare account and a Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey). Never put the key in a GitHub file, Pages variable, or browser input.
+The static GitHub Pages site cannot protect an API key. The `web/worker/` directory contains a small Cloudflare Worker that calls Gemini 3.5 Flash-Lite on the server. Cloudflare Workers and Gemini both have free tiers, with quotas and eligibility that can change. You need a Cloudflare account and a Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey). Never put the key in a GitHub file, Pages variable, or browser input.
 
-1. From the repository root, deploy the Worker with `npx wrangler deploy --config worker/wrangler.toml`. Sign in to your own Cloudflare account if prompted. Note the resulting `https://...workers.dev` URL.
-2. Store the key as a Worker secret with `npx wrangler secret put GEMINI_API_KEY --config worker/wrangler.toml`. Enter it at the secure CLI prompt, not in a command argument or GitHub commit.
-3. Set `public/ask-config.json` to `{ "endpoint": "https://your-worker.workers.dev" }`, run `npm run sync-pages`, and commit and push `public/ask-config.json`, `ask-config.json`, and the built site files. The URL is public; it contains no key.
+1. From the repository root, deploy the Worker with `npx wrangler deploy --config web/worker/wrangler.toml`. Sign in to your own Cloudflare account if prompted. Note the resulting `https://...workers.dev` URL.
+2. Store the key as a Worker secret with `npx wrangler secret put GEMINI_API_KEY --config web/worker/wrangler.toml`. Enter it at the secure CLI prompt, not in a command argument or GitHub commit.
+3. Set `web/public/ask-config.json` to `{ "endpoint": "https://your-worker.workers.dev" }`, run `npm run sync-pages`, and commit and push `web/public/ask-config.json`, `ask-config.json`, and the built site files. The URL is public; it contains no key.
 4. Open Ask Nouri. Its header should say “Live AI · Gemini Flash-Lite”. Ask a test question and verify an answer. If the request fails, the chat shows a visible error rather than calling a prepared answer “live”.
 
-The Worker accepts browser requests only from `https://fredericsetievi.github.io`, limits input and output sizes, and does not receive the saved child profile or meal log. Its public endpoint can still consume quota if abused by a non-browser client, so add provider rate limits and monitoring before a larger public launch. Gemini's free tier may use submitted prompts to improve Google's products. Ask users not to include names or private health details. Questions and recent chat text are sent to Gemini only when the Worker is configured.
+The Worker accepts the website origin `https://fredericsetievi.github.io` and the two configured Capacitor app origins, limits input and output sizes, and does not receive the saved child profile or meal log. Its public endpoint can still consume quota if abused by a non-browser client, so add provider rate limits and monitoring before a larger public launch. Gemini's free tier may use submitted prompts to improve Google's products. Ask users not to include names or private health details. Questions and recent chat text are sent to Gemini only when the Worker is configured.
+
+## Mobile app (Android and iOS)
+
+The Capacitor projects in `mobile/android/` and `mobile/ios/` use the same React app and local storage as the website. On a phone, the bottom tabs lead to Foods and Scan. Scan can open the native camera, read label text on device, or look up a typed barcode through Open Food Facts. A photo of an unlabelled meal cannot identify its ingredients or nutrients; search its component foods instead. The camera photo is held only for the current review and is not uploaded by NouriCircle. Each installation stores its own child profile and meal log, with no account sync.
+
+Requirements: Node.js, Android Studio with an Android SDK for Android, or a Mac with Xcode for iOS. From this repository:
+
+```sh
+npm ci
+npm run mobile:sync
+npm run mobile:android  # or: npm run mobile:ios on a Mac
+```
+
+Run the app in a simulator or on a device from Android Studio/Xcode. After changing web code, run `npm run mobile:sync` again before building. Camera and photo library permission prompts appear when used. Internet access is needed for first-use OCR language downloads, barcode lookup, and optional live Ask Nouri. Prepared Ask guidance and the bundled food examples work without an AI endpoint. To enable live Ask in mobile, configure `web/public/ask-config.json` with your deployed HTTPS Worker URL, sync again, and deploy the updated `web/worker/` code to allow the exact Capacitor origins. Keep the Gemini key in the Worker secret.
+
+The repository includes source projects, not signed APK/IPA builds. App store signing, testing on physical devices, policy review, and release assets are still needed before distribution.
+
+### Download an Android test APK from GitHub Actions
+
+Open the repository's **Actions → Android APK → Run workflow** (or use the build triggered by a push to `main`). When the run succeeds, download the `nouricircle-android-debug-apk` artifact, unzip it, and transfer `app-debug.apk` to your Android phone. Open the APK on the phone and allow installation from that file manager/browser if Android asks. This is a test build signed with a generated debug key; a Play Store release needs its own release signing and distribution setup. Each Actions run can use a different debug signing key, so uninstalling a previous test build may be necessary before installing a new one.

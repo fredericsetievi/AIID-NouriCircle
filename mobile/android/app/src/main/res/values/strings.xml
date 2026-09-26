@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NouriCircle</string>
+    <string name="title_activity_main">NouriCircle</string>
+    <string name="package_name">app.nouricircle.mobile</string>
+    <string name="custom_url_scheme">app.nouricircle.mobile</string>
+</resources>
