@@ -58,6 +58,14 @@ The GitHub Pages site is also an installable progressive web app. On Android, op
 
 The manifest, icons, and service worker are built into `dist/` and copied to the Pages repository root by `npm run sync-pages`.
 
+## Deploy the web app with live Ask Nouri on Vercel
+
+Vercel can host this website and its small `/api/ask` function in the same project. Import this GitHub repository into Vercel with the **repository root** as the Root Directory. The committed `vercel.json` builds the site into `dist/`. In Vercel's project settings, add a server-side environment variable named `GEMINI_API_KEY` with your key from [Google AI Studio](https://aistudio.google.com/api-keys), for **Production** (and Preview if you want AI in preview deployments). Redeploy after saving the variable. Do not create a variable starting with `VITE_`, paste the key into the browser, or commit it to GitHub.
+
+On the Vercel URL, Ask Nouri checks `/api/ask` and switches to live Gemini 3.5 Flash-Lite answers when the server has a key. If the key is missing, the app stays in prepared-answer mode. Open `https://your-project.vercel.app/api/ask` to check that it returns `{ "available": true }`, then ask a test question in the app. The GET check exposes only whether a key is configured, never the key itself. Gemini free-tier quotas and Vercel Hobby limits apply. This route is public, so a larger launch needs usage monitoring and abuse controls. Questions, recent conversation, and a few matching food estimates are sent to Gemini for live answers; the saved child profile and meal log are not sent.
+
+The existing GitHub Pages URL and native mobile builds continue to use their current configuration. Their Ask Nouri feature will not switch to Vercel automatically. The older Cloudflare Worker option below remains available if you prefer it.
+
 ## Important limits
 
 This is an educational prototype, not medical advice. Food values are rounded illustrative estimates per 100 g. Brands and preparation differ. OCR can miss or misread text. Check the original food package and your child's allergy care plan. Consult a clinician for individual nutrition, allergy, growth, or health questions. Live AI answers can be inaccurate and do not include live source verification. Live accounts, moderation, data sync, and a verified nutrition database are future work.
