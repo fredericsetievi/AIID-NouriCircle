@@ -21,7 +21,7 @@ const categories = ['All', 'First foods', 'Development', 'Health questions', 'Pa
 const nav = [
   { page: 'home', label: 'Overview', icon: Home },
   { page: 'explore', label: 'Explore foods', icon: Search },
-  { page: 'label', label: 'Check a label', icon: ScanLine },
+  { page: 'label', label: 'Check food', icon: ScanLine },
   { page: 'ask', label: 'Ask Nouri', icon: Sparkles },
   { page: 'circle', label: 'Parent circle', icon: Users },
 ] as const
