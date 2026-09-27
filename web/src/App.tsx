@@ -106,6 +106,7 @@ const guide = [
   { icon: '🥑', title: 'Explore food and portions', body: 'Choose a food, enter the amount prepared, and add it to today’s meal log. You can also save your own food information on this device. Protein values are estimates, not daily targets.', action: 'Explore foods', destination: 'explore' as const },
   { icon: '🔎', title: 'Check a packaged food', body: 'Enter a barcode to look up a product, or upload a clear label photo. Check the ingredients and allergen information against the original package.', action: 'Check a label', destination: 'label' as const },
   { icon: '💜', title: 'Questions and community', body: 'Ask Nouri can answer live once its secure service is connected. Until then it shows prepared guidance. Parent circle posts stay on this device.', action: 'Go to overview', destination: 'home' as const },
+  { icon: '📱', title: 'Keep NouriCircle on your phone', body: 'On Android, open this site in Chrome, tap the three-dot menu, then choose Install app or Add to Home screen. On iPhone, open it in Safari, tap Share, then Add to Home Screen. Open the new icon for a screen without a browser address bar. Live lookups still need internet.', action: 'Go to overview', destination: 'home' as const },
 ]
 function Guide({ step, next, back, finish, open }: { step: number; next: () => void; back: () => void; finish: () => void; open: (destination: Page | 'profile') => void }) {
   const item = guide[step]

@@ -50,7 +50,13 @@ npm run dev
 
 Open `/app.html` on the local URL printed by Vite. The app source is in `web/`; native projects are in `mobile/`. To check a production build, run `npm run build` and `npm run preview`. This repository's Pages setting currently serves `main` at the repository root. After editing source files, run `npm run sync-pages` and commit the updated `index.html` and `assets/` with the source. The GitHub Actions workflow also builds a `dist/` deployment for a future switch to Actions based Pages hosting.
 
-For a feature-by-feature description, including the problem each feature addresses, see [Feature documentation](docs/FEATURES.md). A four-step getting started guide appears on the first visit and can be reopened from the help icon or menu.
+For a feature-by-feature description, including the problem each feature addresses, see [Feature documentation](docs/FEATURES.md). A five-step getting started guide appears on the first visit and can be reopened from the help icon or menu.
+
+## Install the website on a phone
+
+The GitHub Pages site is also an installable progressive web app. On Android, open [NouriCircle](https://fredericsetievi.github.io/AIID-NouriCircle/) in Chrome, tap the three-dot menu, then choose **Install app** or **Add to Home screen**. On iPhone, open it in Safari, tap **Share**, then **Add to Home Screen**. Launch the icon for an app-like window without an address bar. The first visit needs internet. Some previously opened screens can work offline, but food lookups, OCR downloads, and future live Gemini answers need internet. Saved entries remain on the device and do not sync.
+
+The manifest, icons, and service worker are built into `dist/` and copied to the Pages repository root by `npm run sync-pages`.
 
 ## Important limits
 
