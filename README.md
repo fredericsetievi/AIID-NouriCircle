@@ -20,7 +20,9 @@ The **food explorer** helps a parent look up a food and estimate the protein in 
 
 The **label checker** helps with small print on packaged food. A parent can take or upload a label photo, correct the extracted text, and review highlighted allergy and ingredient terms. They can also type a barcode number to look up a public Open Food Facts record. The original package is the reference for allergy decisions; the app does not declare a product safe.
 
-**Ask Nouri** gives parents a place to start with common feeding and nutrition questions. The public demo currently shows prepared guidance with reading links. A separate, privately configured Worker can enable live Gemini answers; the app labels which mode is active.
+The **meal photo guide** is a separate option on the Check food screen. A parent can take a picture of fresh food or a plated meal, or choose an existing picture. Gemini suggests which foods are visible, their likely nutrient sources, possible allergens to verify, and what cannot be known from the picture. The image is resized before upload, sent only when Analyze is tapped, and is not stored in the meal log. No child profile is sent with it. A photo cannot measure portion weight, exact nutrients, hidden ingredients, or daily nutritional adequacy. The Vercel server needs a private `GEMINI_API_KEY`; the GitHub Pages and installed mobile builds use that same photo endpoint.
+
+**Ask Nouri** gives parents a place to start with common feeding and nutrition questions. On Vercel, a private `GEMINI_API_KEY` enables live Gemini answers. Without that key, the app shows prepared guidance with reading links; the app labels which mode is active.
 
 | Check a label | Ask Nouri |
 | --- | --- |

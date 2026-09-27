@@ -12,6 +12,7 @@ import { foods, samplePosts, sources, type Food, type Meal, type Post } from './
 import { analyzeLabel, answerQuestion, localDay, proteinFor } from './logic'
 import { lookupProduct, type Product } from './openFoodFacts'
 import { askLive, loadAskEndpoint, type ChatTurn } from './askApi'
+import { analyzeFoodPhoto, type PhotoAnalysis } from './photoApi'
 
 type Page = 'home' | 'explore' | 'label' | 'ask' | 'circle'
 type Child = { name: string; age: number; allergies: string[] }
@@ -104,7 +105,7 @@ function SectionHeading({ eyebrow, title, description, action }: { eyebrow: stri
 const guide = [
   { icon: '👋', title: 'Welcome to NouriCircle', body: 'A simple place to explore food, keep a meal log, and find a starting point for your questions. Your child profile and log stay in this browser.', action: 'Set up child profile', destination: 'profile' as const },
   { icon: '🥑', title: 'Explore food and portions', body: 'Choose a food, enter the amount prepared, and add it to today’s meal log. You can also save your own food information on this device. Protein values are estimates, not daily targets.', action: 'Explore foods', destination: 'explore' as const },
-  { icon: '🔎', title: 'Check a packaged food', body: 'Enter a barcode to look up a product, or upload a clear label photo. Check the ingredients and allergen information against the original package.', action: 'Check a label', destination: 'label' as const },
+  { icon: '🔎', title: 'Check a food photo or label', body: 'Photograph a meal for general nutrition clues, or check a packaged food by barcode or label photo. A photo cannot measure exact portions or prove a food is safe.', action: 'Check food', destination: 'label' as const },
   { icon: '💜', title: 'Questions and community', body: 'Ask Nouri can answer live once its secure service is connected. Until then it shows prepared guidance. Parent circle posts stay on this device.', action: 'Go to overview', destination: 'home' as const },
   { icon: '📱', title: 'Keep NouriCircle on your phone', body: 'On Android, open this site in Chrome, tap the three-dot menu, then choose Install app or Add to Home screen. On iPhone, open it in Safari, tap Share, then Add to Home Screen. Open the new icon for a screen without a browser address bar. Live lookups still need internet.', action: 'Go to overview', destination: 'home' as const },
 ]
@@ -117,7 +118,7 @@ function HomePage({ child, catalog, todayMeals, dailyProtein, groups, navigate, 
     <div className="welcome-line"><span className="eyebrow">A GOOD PLACE TO BEGIN</span><span className="date-text">{new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())}</span></div>
     <div className="hero"><div className="hero-copy"><span className="hero-kicker"><Sparkles size={15} /> For every little step</span><h1>Growing well starts<br />with <em>curiosity.</em></h1><p>Understand what’s on their plate, find answers to your questions, and feel less alone along the way.</p><button className="button white" onClick={() => navigate('explore')}>Explore foods <ArrowRight size={18} /></button></div><div className="hero-art" aria-hidden="true"><div className="orbit orbit-one" /><div className="orbit orbit-two" /><div className="food-float float-one">🥦</div><div className="food-float float-two">🐟</div><div className="food-float float-three">🥕</div><div className="hero-bowl"><span>🥑</span><span>🥬</span><span>🍅</span><span>🥕</span></div><div className="hero-sparkle a">✦</div><div className="hero-sparkle b">✳</div></div></div>
     <div className="intro-heading"><div><span className="eyebrow">MADE FOR REAL LIFE</span><h2>What would you like to do today?</h2></div><p>Take one small step at a time.</p></div>
-    <div className="action-grid"><button className="action-card" onClick={() => navigate('label')}><span className="action-icon lavender"><ScanLine size={26} /></span><span className="action-title">Check a food label <ArrowRight size={17} /></span><span className="action-description">Upload a photo and look closer at ingredients and allergens.</span><span className="action-bottom">SCAN A LABEL</span></button><button className="action-card" onClick={() => navigate('explore')}><span className="action-icon peach"><Leaf size={26} /></span><span className="action-title">Explore fresh foods <ArrowRight size={17} /></span><span className="action-description">See what an amount of salmon, tofu or other foods contains.</span><span className="action-bottom">EXPLORE FOODS</span></button><button className="action-card" onClick={() => navigate('ask')}><span className="action-icon mint"><MessageCircle size={26} /></span><span className="action-title">Ask a question <ArrowRight size={17} /></span><span className="action-description">Get a calm starting point for your food questions.</span><span className="action-bottom">ASK NOURI</span></button></div>
+    <div className="action-grid"><button className="action-card" onClick={() => navigate('label')}><span className="action-icon lavender"><ScanLine size={26} /></span><span className="action-title">Check a food photo <ArrowRight size={17} /></span><span className="action-description">Photograph a meal for nutrient clues, or check a package label.</span><span className="action-bottom">PHOTO OR LABEL</span></button><button className="action-card" onClick={() => navigate('explore')}><span className="action-icon peach"><Leaf size={26} /></span><span className="action-title">Explore fresh foods <ArrowRight size={17} /></span><span className="action-description">See what an amount of salmon, tofu or other foods contains.</span><span className="action-bottom">EXPLORE FOODS</span></button><button className="action-card" onClick={() => navigate('ask')}><span className="action-icon mint"><MessageCircle size={26} /></span><span className="action-title">Ask a question <ArrowRight size={17} /></span><span className="action-description">Get a calm starting point for your food questions.</span><span className="action-bottom">ASK NOURI</span></button></div>
     <div className="dashboard-grid"><section className="panel day-panel"><div className="panel-heading"><div><span className="eyebrow">A SIMPLE PICTURE</span><h2>{child.name}'s food today</h2></div><button className="text-button" onClick={() => navigate('explore')}>Add food <Plus size={17} /></button></div>{todayMeals.length ? <><div className="stats-row"><div><strong>{todayMeals.length}</strong><span>foods logged</span></div><div><strong>{groups}</strong><span>food groups</span></div><div><strong>{dailyProtein.toFixed(1)}<small> g</small></strong><span>protein estimate</span></div></div><div className="meal-list">{todayMeals.slice(0, 4).map(m => { const food = m.foodSnapshot || catalog.find(f => f.id === m.foodId); if (!food) return null; return <div className="meal-row" key={m.id}><span className={`meal-emoji ${food.color}`}>{food.emoji}</span><div><strong>{food.name}</strong><small>{m.meal} · {m.grams} g · ~{proteinFor(food, m.grams).toFixed(1)} g protein</small></div><button className="icon-button subtle" aria-label={`Remove ${food.name}`} onClick={() => removeMeal(m.id)}><Trash2 size={16} /></button></div> })}</div></> : <div className="empty-state"><span>🥣</span><strong>A blank page is a fine start.</strong><p>Add a food to see a gentle overview of the day.</p><button className="button secondary" onClick={() => navigate('explore')}>Find a food <ArrowRight size={16} /></button></div>}<p className="panel-footnote">A meal log gives context. It cannot measure whether a child’s personal needs are met.</p></section><section className="panel discover-panel"><div className="panel-heading"><div><span className="eyebrow">A LITTLE INSPIRATION</span><h2>Explore a food</h2></div></div><div className="featured-food"><div className="featured-visual">🐟<span className="featured-leaf">✦</span></div><div><span className="mini-tag">FRESH FOOD</span><h3>Salmon, cooked</h3><p>Curious how much protein is in a small portion?</p><button className="text-button" onClick={() => openFood(foods[0])}>Look closer <ArrowRight size={17} /></button></div></div><div className="discover-bottom"><span className="tiny-avatars">👩🏽 👩🏻 👨🏾</span><span>There’s room for your questions in the circle.</span><button onClick={() => navigate('circle')} aria-label="Open parent circle"><ArrowRight size={17} /></button></div></section></div>
   </>
 }
@@ -163,6 +164,75 @@ function FoodModal({ food, child, onClose, onAdd }: { food: Food; child: Child; 
   const [meal, setMeal] = useState('Lunch')
   const allergyMatch = food.allergens.filter(a => child.allergies.includes(a))
   return <div className="modal-backdrop" onMouseDown={onClose}><div className="modal food-modal" role="dialog" aria-modal="true" aria-label={food.name} onMouseDown={e => e.stopPropagation()}><button className="icon-button modal-close" onClick={onClose} aria-label="Close"><X size={20} /></button><div className={`food-modal-art ${food.color}`}>{food.emoji}</div><span className="eyebrow">{food.local ? "YOUR SAVED FOOD" : "FOOD EXPLORER"}</span><h2>{food.name}</h2><p>{food.note}. This is a simple estimate for a food amount you choose, not a recommended serving.</p>{allergyMatch.length > 0 && <div className="alert warning"><ShieldCheck size={18} /><span>Saved allergy match: {allergyMatch.join(', ')}. Check with your child's clinician before serving.</span></div>}{food.allergens.length > 0 && !allergyMatch.length && <div className="allergen-inline">{food.local ? "Allergens you entered" : "Common allergen"}: <strong>{food.allergens.join(', ')}</strong></div>}<div className="portion-control"><div><label htmlFor="grams">Amount to explore</label><small>Enter the amount of prepared food in grams.</small></div><div className="grams-input"><input id="grams" type="number" min="1" max="1000" value={grams} onChange={e => setGrams(Math.max(1, Math.min(1000, Number(e.target.value) || 1)))} /><span>g</span></div></div><div className="portion-result"><span>Estimated protein in this amount</span><strong>{proteinFor(food, grams).toFixed(1)} <small>g</small></strong><p>{food.local ? "Based on the value you entered" : "Based on a rounded example"}: {food.protein} g per 100 g. This does not show how much of a daily need is met.</p></div><div className="food-tip"><Leaf size={18} /><span>{food.tip} {food.local ? "This entry is not checked against a nutrition database or allergen record." : ""}</span></div><label className="form-label">Add to today's meal log<select value={meal} onChange={e => setMeal(e.target.value)}><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select></label><button className="button primary full" onClick={() => onAdd(grams, meal)}><Plus size={18} /> Add to meal log</button></div></div>
+}
+function FoodPhotoPanel() {
+  const fileInput = useRef<HTMLInputElement>(null)
+  const cameraInput = useRef<HTMLInputElement>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [result, setResult] = useState<PhotoAnalysis | null>(null)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
+
+  function choose(selected: File | undefined) {
+    if (!selected) return
+    if (!selected.type.startsWith('image/')) { setError('Choose a food image.'); return }
+    setFile(selected)
+    setPreview(URL.createObjectURL(selected))
+    setResult(null)
+    setError('')
+  }
+  async function takePhoto() {
+    if (!Capacitor.isNativePlatform()) { cameraInput.current?.click(); return }
+    try {
+      const photo = await NativeCamera.getPhoto({ quality: 75, resultType: CameraResultType.Uri, source: CameraSource.Camera, correctOrientation: true })
+      if (!photo.webPath) throw new Error('The camera did not return a photo.')
+      const response = await fetch(photo.webPath)
+      const blob = await response.blob()
+      choose(new File([blob], 'meal.jpg', { type: blob.type || 'image/jpeg' }))
+    } catch (err) {
+      if (err instanceof Error && /cancel/i.test(err.message)) return
+      setError(err instanceof Error ? err.message : 'Could not open the camera. Choose an image instead.')
+    }
+  }
+  async function analyze() {
+    if (!file) return
+    setBusy(true); setError(''); setResult(null)
+    try { setResult(await analyzeFoodPhoto(file)) }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not analyze this photo.') }
+    finally { setBusy(false) }
+  }
+  return <section className="panel meal-photo-panel" aria-label="Analyze a meal photo">
+    <div className="step-number">01 <span>PHOTO OF FOOD OR A MEAL</span></div>
+    <h2>What might be on this plate?</h2>
+    <p>Take a picture of fresh food or a prepared meal. Nouri can point out likely foods and the nutrients they may provide.</p>
+    <div className="meal-photo-grid">
+      <div>
+        <input ref={fileInput} type="file" accept="image/*" hidden onChange={e => { choose(e.target.files?.[0]); e.target.value = '' }} />
+        <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={e => { choose(e.target.files?.[0]); e.target.value = '' }} />
+        <button type="button" className="button primary full" onClick={() => void takePhoto()} disabled={busy}><Camera size={18} /> Take a food photo</button>
+        <button type="button" className="upload-zone meal-upload" onClick={() => fileInput.current?.click()} disabled={busy}>
+          {preview ? <img src={preview} alt="Food photo selected for analysis" /> : <><UploadCloud size={30} /><strong>Choose a food photo</strong><small>Use an existing image on your device</small></>}
+        </button>
+        <button type="button" className="button secondary full" disabled={!file || busy} onClick={() => void analyze()}>{busy ? 'Analyzing photo...' : 'Analyze this food photo'} <Sparkles size={17} /></button>
+        <p className="upload-note">Your photo is sent to Google Gemini through NouriCircle when you tap Analyze. It is not saved to your meal log. No child profile is sent.</p>
+      </div>
+      <div className="meal-photo-result" aria-live="polite">
+        {error && <div className="alert warning" role="alert">{error}</div>}
+        {busy && <div className="processing"><span className="spinner" /> Looking at the food in your photo...</div>}
+        {result ? <>
+          <span className="mini-tag">PHOTO GUIDE · GENERAL NUTRITION</span>
+          <h3>{result.summary}</h3>
+          {result.foods.length > 0 && <><strong>Foods and likely nutrients</strong><ul>{result.foods.map((food, i) => <li key={i}><b>{food.name}:</b> {food.nutrients}</li>)}</ul></>}
+          {result.possibleAllergens.length > 0 && <div className="alert warning"><ShieldCheck size={18} /><span>Possible allergens to check: {result.possibleAllergens.join(', ')}. Check the real ingredients and your care plan.</span></div>}
+          {result.uncertainties.length > 0 && <><strong>What the photo cannot show</strong><ul>{result.uncertainties.map((note, i) => <li key={i}>{note}</li>)}</ul></>}
+          {result.nextStep && <p>{result.nextStep}</p>}
+          <small>A photo cannot measure grams, exact nutrients, hidden ingredients, or whether your child has met daily needs.</small>
+        </> : !busy && !error && <div className="result-placeholder"><div className="placeholder-art"><Camera size={42} /></div><h2>Your food photo notes will appear here.</h2><p>For exact amounts, weigh the food and use Explore foods or its package label.</p></div>}
+      </div>
+    </div>
+  </section>
 }
 function LabelPage({ child }: { child: Child }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -222,9 +292,10 @@ function LabelPage({ child }: { child: Child }) {
     finally { if (worker) await worker.terminate(); setBusy(false) }
   }
   return <>
-    <SectionHeading eyebrow="CHECK A FOOD LABEL" title="The little print, made clearer." description="Look up a barcode, upload a label photo, or paste the ingredients. Always verify the original package." />
+    <SectionHeading eyebrow="CHECK FOOD" title="Look closer at food and labels." description="Take a meal photo for general nutrition clues, or check a packaged food by barcode or label. A photo cannot measure exact nutrients or guarantee safety." />
+    <FoodPhotoPanel />
     <div className="label-layout"><section className="panel label-input-panel">
-      <div className="step-number">01 <span>FIND A PACKAGED FOOD</span></div>
+      <div className="step-number">02 <span>CHECK A PACKAGED FOOD</span></div>
       <form className="barcode-form" onSubmit={lookUp}><label htmlFor="barcode">Barcode number</label><div><input id="barcode" inputMode="numeric" pattern="[0-9]{8,14}" minLength={8} maxLength={14} value={barcode} onChange={e => setBarcode(e.target.value.replace(/\D/g, ''))} placeholder="e.g. 3017620422003" /><button className="button primary" disabled={lookupBusy || !barcode}>{lookupBusy ? 'Looking up...' : 'Look up'} <Search size={16} /></button></div><small>Type the digits beneath the barcode. Results come from Open Food Facts.</small></form>
       {lookupMessage && <div className="alert warning" role="status">{lookupMessage}</div>}
       <div className="input-divider">or use a photo</div>
@@ -237,7 +308,7 @@ function LabelPage({ child }: { child: Child }) {
       {error && <div className="alert warning">{error}</div>}
       <label className="form-label label-editor">Ingredient or label text <small>Check and correct the extracted words before reviewing.</small><textarea rows={7} placeholder={'Ingredients: oats, milk, sugar...\nProtein 4 g, Sugars 6 g, Sodium 90 mg'} value={label} onChange={e => { setLabel(e.target.value); setChecked(false); setProduct(null) }} /></label>
       <button className="button primary full" disabled={!label.trim() || busy} onClick={() => setChecked(true)}>Review this text <ArrowRight size={17} /></button>
-    </section><section className="panel label-result-panel"><div className="step-number">02 <span>UNDERSTAND WHAT YOU SEE</span></div>
+    </section><section className="panel label-result-panel"><div className="step-number">03 <span>UNDERSTAND WHAT YOU SEE</span></div>
       {product && <div className="product-result"><span className="mini-tag">OPEN FOOD FACTS · LIVE LOOKUP</span><h2>{product.name}</h2><p>{product.brand || 'Brand not listed'} · Barcode {product.barcode}</p><a href={product.url} target="_blank" rel="noopener noreferrer">View source record <ArrowRight size={14} /></a><div className="result-list"><div><span>Serving size</span><strong>{product.serving || 'Not listed'}</strong></div><div><span>Protein per 100 g</span><strong>{product.protein === null ? 'Not listed' : `${product.protein} g`}</strong></div><div><span>Sugars per 100 g</span><strong>{product.sugars === null ? 'Not listed' : `${product.sugars} g`}</strong></div><div><span>Sodium per 100 g</span><strong>{product.sodium === null ? 'Not listed' : `${Math.round(product.sodium * 1000)} mg`}</strong></div><div><span>Listed allergens</span><strong>{product.allergens.length ? product.allergens.join(', ') : 'Not listed in database'}</strong></div><div><span>Possible traces</span><strong>{product.traces.length ? product.traces.join(', ') : 'Not listed in database'}</strong></div></div>{savedProductMatches.length > 0 && <div className="alert warning"><ShieldCheck size={18} /><span>Saved allergy appears in database allergens or possible traces: {savedProductMatches.join(', ')}. Check the package and care plan.</span></div>}</div>}
       {checked ? <><h2>Ingredient notes</h2><p className="muted">A starting point, never a food safety verdict.</p>{analysis.matches.length > 0 ? <div className="alert warning"><ShieldCheck size={20} /><div><strong>Saved allergy term found</strong><span>{analysis.matches.join(', ')} appears in the text. Check the full package and care plan.</span></div></div> : <div className="alert neutral"><ShieldCheck size={20} /><div><strong>No saved allergy term found in this text</strong><span>This is not an allergy clearance. Records and photo reading can miss words.</span></div></div>}<div className="result-list"><div><span>Allergen words mentioned</span><strong>{analysis.mentioned.length ? analysis.mentioned.join(', ') : 'None detected in this text'}</strong></div>{!product && <><div><span>Protein in text</span><strong>{analysis.protein === null ? 'Not found' : `${analysis.protein} g (serving unclear)`}</strong></div><div><span>Sugar in text</span><strong>{analysis.sugar === null ? 'Not found' : `${analysis.sugar} g (serving unclear)`}</strong></div><div><span>Sodium in text</span><strong>{analysis.sodium === null ? 'Not found' : `${analysis.sodium} mg (serving unclear)`}</strong></div></>}<div><span>Ingredient terms to look up</span><strong>{analysis.additives.length ? analysis.additives.join(', ') : 'None from the short example list'}</strong></div></div><div className="result-reminder"><CircleHelp size={18} /><span>An additive name alone does not show harm. Check serving size, age appropriate preparation, and the original label.</span></div></> : !product && <div className="result-placeholder"><div className="placeholder-art"><ScanLine size={45} /><span>✦</span></div><h2>Your food notes will appear here.</h2><p>Look up a barcode or review the text from a label photo.</p><div className="placeholder-line" /><div className="placeholder-line short" /><div className="placeholder-line medium" /></div>}
     </section></div><div className="learn-note"><ShieldCheck size={20} /><p>Open Food Facts is community supplied and may be incomplete. Package labels can change. Always check the product in your hand, especially for allergies.</p></div>
