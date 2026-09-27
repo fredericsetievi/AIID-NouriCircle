@@ -1,6 +1,34 @@
-# NouriCircle MVP
+# NouriCircle
 
-NouriCircle is an English-first web prototype for new parents and caregivers of babies starting solid foods and young children. It brings food exploration, a simple meal log, label reading, nutrition questions, and parent discussion into one calm interface. The visual direction follows the NouriCircle brochure: soft lavender, deep purple, rounded cards, and friendly food illustrations.
+NouriCircle is a web and mobile prototype for parents and caregivers exploring food with young children. It puts food ideas, a simple meal log, packaged food label checks, feeding questions, and parent conversations in one place. The Android app uses the phone camera to photograph a food label; the website offers a photo upload. Both use the same React interface.
+
+**Try it:** [Open the website](https://fredericsetievi.github.io/AIID-NouriCircle/) · [Download the Android test APK](mobile/downloads/NouriCircle-Android-debug.apk) · [Read the feature guide](docs/FEATURES.md)
+
+<img src="Personal%20Project%202%20-%20NouriCircle/ChatGPT%20Image%20Sep%2026%2C%202026%2C%2006_19_40%20PM-1.png" alt="NouriCircle concept poster showing a parent and child beside the proposed app" width="600">
+
+*Concept poster from the project folder. The app screenshots below show the current prototype.*
+
+## What parents can do
+
+The **home screen** gives a starting point for the day. Parents can move directly to food ideas, label checks, questions, and the parent circle without searching through separate tools.
+
+The **food explorer** helps a parent look up a food and estimate the protein in a chosen portion. It includes 20 example foods and lets parents save their own foods. This can make meal planning and recall easier, while keeping the numbers visibly approximate.
+
+| Home | Explore foods |
+| --- | --- |
+| <img src="docs/images/mobile-home.png" alt="NouriCircle mobile home screen with shortcuts" width="280"> | <img src="docs/images/mobile-foods.png" alt="Mobile food explorer with search, categories, and food cards" width="280"> |
+
+The **label checker** helps with small print on packaged food. A parent can take or upload a label photo, correct the extracted text, and review highlighted allergy and ingredient terms. They can also type a barcode number to look up a public Open Food Facts record. The original package is the reference for allergy decisions; the app does not declare a product safe.
+
+**Ask Nouri** gives parents a place to start with common feeding and nutrition questions. The public demo currently shows prepared guidance with reading links. A separate, privately configured Worker can enable live Gemini answers; the app labels which mode is active.
+
+| Check a label | Ask Nouri |
+| --- | --- |
+| <img src="docs/images/mobile-label.png" alt="Mobile label checker with barcode entry and photo options" width="280"> | <img src="docs/images/mobile-ask.png" alt="Ask Nouri showing prepared guidance mode" width="280"> |
+
+Parents can also create a **child profile** with an age and known allergies, record foods in **today's meal log**, and review an estimated protein total. The **parent circle** displays sample conversations and lets a parent add posts and replies on their own device. These entries stay on that device; the circle is a demonstration, not a shared live forum.
+
+This is an educational prototype for learning and exploration. It does not diagnose allergies, prescribe a diet, or replace care from a clinician.
 
 ## Project layout
 
@@ -8,6 +36,8 @@ NouriCircle is an English-first web prototype for new parents and caregivers of 
 | --- | --- |
 | `web/` | Shared React app, public configuration, and optional Ask Nouri Worker |
 | `mobile/android/`, `mobile/ios/` | Native Capacitor projects for phones |
+| `mobile/downloads/` | Latest Android debug APK published by the mobile workflow |
+| `docs/images/` | Screenshots captured from the current mobile-sized app interface |
 | `scripts/`, root configuration | Build both platforms from the shared source |
 | `index.html`, `assets/`, `ask-config.json` | Generated website copy for the current GitHub Pages branch setup |
 
@@ -20,19 +50,7 @@ npm run dev
 
 Open `/app.html` on the local URL printed by Vite. The app source is in `web/`; native projects are in `mobile/`. To check a production build, run `npm run build` and `npm run preview`. This repository's Pages setting currently serves `main` at the repository root. After editing source files, run `npm run sync-pages` and commit the updated `index.html` and `assets/` with the source. The GitHub Actions workflow also builds a `dist/` deployment for a future switch to Actions based Pages hosting.
 
-For a feature-by-feature explanation and the parent problem each feature addresses, see [Feature documentation](docs/FEATURES.md).
-
-## What works in this prototype
-
-- **Child profile:** Set a nickname, age in months, and known allergies. The profile stays in browser local storage.
-- **Food explorer:** Search 20 built-in example foods, enter a portion in grams, see an approximate protein amount, and add it to today's meal log.
-- **My foods:** Add, edit, or remove your own food details including protein per 100 g, category, allergen notes, and a preparation reminder. Saved foods stay in this browser and can be added to the meal log. Logged meals retain their original food information if a saved food is later changed or removed.
-- **Meal log:** Review foods, groups, and an estimated protein total for the current day. Remove entries. The app does not claim a child has met a daily requirement.
-- **Food label check:** Upload a photo for browser-side OCR, or paste label text. Review and correct the text, then highlight saved allergy terms, common allergen words, a few nutrition values, and selected ingredient terms. It does not rate a product as healthy or safe.
-- **Live packaged food lookup:** Enter the digits beneath a barcode to fetch the product name, ingredients, allergens, possible traces, and available per-100 g nutrient values from Open Food Facts. The original package remains the reference for allergy decisions. This free public service can be unavailable, limited, or missing products.
-- **Getting started guide:** A four-step guide appears on the first visit and can be reopened from the help icon or side menu.
-- **Ask Nouri:** The app can call a Gemini Flash-Lite Worker for live answers when the private service is configured. Without it, common questions show prepared responses and source links, clearly labeled as examples.
-- **Parent circle:** Browse sample discussions across first foods, development, health questions, and parent wellbeing. Create posts and replies stored only in this browser. This is not a live community and has no active moderation.
+For a feature-by-feature description, including the problem each feature addresses, see [Feature documentation](docs/FEATURES.md). A four-step getting started guide appears on the first visit and can be reopened from the help icon or menu.
 
 ## Important limits
 
@@ -82,11 +100,11 @@ npm run mobile:android  # or: npm run mobile:ios on a Mac
 
 Run the app in a simulator or on a device from Android Studio/Xcode. After changing web code, run `npm run mobile:sync` again before building. Camera and photo library permission prompts appear when used. Internet access is needed for first-use OCR language downloads, barcode lookup, and optional live Ask Nouri. Prepared Ask guidance and the bundled food examples work without an AI endpoint. To enable live Ask in mobile, configure `web/public/ask-config.json` with your deployed HTTPS Worker URL, sync again, and deploy the updated `web/worker/` code to allow the exact Capacitor origins. Keep the Gemini key in the Worker secret.
 
-The repository includes source projects, not signed APK/IPA builds. App store signing, testing on physical devices, policy review, and release assets are still needed before distribution.
+The repository includes a debug Android APK for testing. App store signing, testing on physical devices, policy review, and release setup are still needed for distribution. No installable iPhone build is published.
 
 ### Download mobile builds
 
-After a successful Android job, the workflow updates [the `mobile/downloads/` folder](mobile/downloads/) with `NouriCircle-Android-debug.apk`. Open the file on GitHub and choose **Download raw file**, or download the `nouricircle-android-debug-apk` artifact from **Actions → Mobile builds** and unzip it. Transfer the APK to your Android phone. Open the APK on the phone and allow installation from that file manager/browser if Android asks. The Android APK is a test build signed with a generated debug key; a Play Store release needs its own release signing and distribution setup. Each Actions run can use a different debug signing key, so uninstalling a previous test build may be necessary before installing a new one.
+Download [NouriCircle-Android-debug.apk](mobile/downloads/NouriCircle-Android-debug.apk) from GitHub by opening the file and choosing **Download raw file**. You can also download the `nouricircle-android-debug-apk` artifact from **Actions → Mobile builds** and unzip it. Transfer the APK to your Android phone, open it, and allow installation from that file manager or browser if Android asks. The workflow replaces the file in `mobile/downloads/` after a successful Android build. This is a test build signed with a generated debug key; a Play Store release needs its own signing and distribution setup. Each Actions run can use a different debug signing key, so uninstalling a previous test build may be necessary before installing a new one.
 
 
 The same **Mobile builds** workflow also creates `nouricircle-ios-simulator-app`, a zipped `.app` for an iOS Simulator on a Mac. It cannot be installed on a physical iPhone. A device-installable `.ipa` requires an Apple signing certificate and provisioning profile (or TestFlight distribution), which are not configured in this repository. Never commit signing credentials.
